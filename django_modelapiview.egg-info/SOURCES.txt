@@ -1,0 +1,12 @@
+README.md
+setup.py
+django_modelapiview/APIResponse.py
+django_modelapiview/APIView.py
+django_modelapiview/__init__.py
+django_modelapiview/http_status_codes.py
+django_modelapiview.egg-info/PKG-INFO
+django_modelapiview.egg-info/SOURCES.txt
+django_modelapiview.egg-info/dependency_links.txt
+django_modelapiview.egg-info/not-zip-safe
+django_modelapiview.egg-info/requires.txt
+django_modelapiview.egg-info/top_level.txt

@@ -1,7 +1,7 @@
 """
-Django-RouteView
+Django-ModelAPIView
 ----------------
-A RouteView class which register itself
+An APIView class which handles endpoints associated with its model
 """
 
 from os import path
@@ -13,21 +13,22 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 from setuptools import setup
 
 setup(
-    name='django_routeview',
+    name='django_modelapiview',
     version='1.0.0',
-    url='https://github.com/TiphaineLAURENT/Django_RouteView',
+    url='https://github.com/TiphaineLAURENT/Django_APIView',
     license='BSD',
     author='Tiphaine LAURENT',
     author_email='tip.lau@hotmail.fr',
-    description='A RouteView class which register itself',
+    description='An APIView to handles its model endpoints',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    packages=['django_routeview'],
+    packages=['django_modelapiview'],
     zip_safe=False,
     include_package_data=True,
     platforms='any',
     install_requires=[
-        'Django'
+        'Django',
+	'django_routeview'
     ],
     classifiers=[
         'Environment :: Web Environment',
