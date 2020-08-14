@@ -18,6 +18,8 @@ from .APIResponse import APIResponse, QuerySuccessful, CreationSuccessful, NotFo
 class JSONMixin(object):
     """
      Allow a model to be serialized / deserialized.
+
+     json_fields:list[str]
     """
 
     json_fields:List[str] = []
@@ -36,7 +38,7 @@ class JSONMixin(object):
         """
         dump = {'id': self.id}
         for field_name in self.json_fields:
-            field:models.Field = getattr(self, field_name)
+            field = getattr(self, field_name)
             if issubclass(field.__class__, models.manager.BaseManager):
                 value = [{'id': related.id, 'url': related.get_url(request)} for related in field.all().only('id')]
             elif hasattr(field, 'id'):
@@ -74,7 +76,7 @@ class JSONMixin(object):
         data = {}
         if id:
             data['id'] = id
-        elif raw_data['id']:
+        elif 'id' in raw_data:
             data['id'] = raw_data['id']
         m2m_data = {}
 
@@ -85,6 +87,8 @@ class JSONMixin(object):
             field = cls._meta.get_field(field_name)
             if field.remote_field and isinstance(field.remote_field, models.ManyToManyRel):
                 m2m_data[field_name] = field_value
+            elif field.remote_field and isinstance(field.remote_field, models.ManyToOneRel) and not field_name.endswith("_id"):
+                data[f"{field_name}_id"] = field_value
             else:
                 data[field_name] = field_value
         
