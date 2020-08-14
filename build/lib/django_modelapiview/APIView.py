@@ -8,10 +8,11 @@ from django.http import HttpRequest
 import json
 
 from typing import Any, List
+from http import HTTPStatus
 
 from django_routeview import RouteView, urlpatterns
 
-from .APIResponse import APIResponse, NotAllowed
+from .APIResponse import APIResponse, QuerySuccessful, CreationSuccessful, NotFound, NotAllowed, Conflict
 
 
 class JSONMixin(object):
@@ -60,7 +61,7 @@ class JSONMixin(object):
         return dump
 
     @classmethod
-    def deserialize(cls, serialized_data:str, id:int=None, save:bool=True) -> Any:
+    def deserialize(cls, serialized_data:str, id:int=None, save:bool=True) -> dict:
         """
          Deserialize a string to type cls
 
@@ -73,7 +74,7 @@ class JSONMixin(object):
         data = {}
         if id:
             data['id'] = id
-        elif raw_data['id']:
+        elif 'id' in raw_data:
             data['id'] = raw_data['id']
         m2m_data = {}
 
@@ -115,7 +116,7 @@ class APIView(RouteView):
     authentification:bool = False
     http_method_names:List[str] = ["get", "post", "put", "patch", "delete", "head", "options"]
 
-    def _add_route_(self):
+    def _add_route_(self) -> None:
         if self.route is not None:
             if self.name is None:
                 self.name = self.__name__
@@ -142,48 +143,67 @@ class APIView(RouteView):
             self.plural_name = self.model._meta.verbose_name_plural or f"{self.model.__name__}s"
 
     @csrf_exempt
-    def dispatch(self, *args, **kwargs):
+    def dispatch(self, *args, **kwargs) -> APIResponse:
         return super().dispatch(*args, **kwargs)
 
-    def get(self, request:HttpRequest, id:int=None, *args, **kwargs):
+    def get(self, request:HttpRequest, id:int=None, *args, **kwargs) -> APIResponse:
         """
          Retrieve specific or collection
         """
         if id:
-            return APIResponse(200, "", self.queryset.first().serialize(request))
-        return APIResponse(200, "", [obj.serialize(request) for obj in self.queryset])
+            queryset = self.queryset.filter(id=id)
+            if queryset.count() == 0:
+                return NotFound(f"No {self.singular_name} with id {id}")
+            return QuerySuccessful(f"Retrieved {self.singular_name}", data=queryset.first().serialize(request))
 
-    def patch(self, request:HttpRequest, id:int=None, *args, **kwargs):
+        # Else if trying to get on collection
+        return QuerySuccessful(f"Retrieved {self.plural_name}", data=[obj.serialize(request) for obj in self.queryset])
+
+    def patch(self, request:HttpRequest, id:int=None, *args, **kwargs) -> APIResponse:
         """
          Update specific
         """
-        if id and self.queryset.filter(id=id).count():
-            return APIResponse(200, "", self.model.deserialize(request.body.decode("utf-8"), id).serialize(request))
+        if id:
+            if self.queryset.filter(id=id).count() == 0:
+                return NotFound(f"No {self.singular_name} with id {id}")
+            return QuerySuccessful(f"Updated {self.singular_name}", self.model.deserialize(request.body.decode("utf-8"), id).serialize(request))
+
+        # Else if trying to patch on collection
         return NotAllowed()
 
-    def put(self, request:HttpRequest, id:int=None, *args, **kwargs):
+    def put(self, request:HttpRequest, id:int=None, *args, **kwargs) -> APIResponse:
         """
          Emplace specific
         """
-        if id and not self.queryset.filter(id=id).count():
-            return APIResponse(200, "", self.model.deserialize(request.body.decode("utf-8"), id).serialize(request))
-        return NotAllowed(reason=f"Either id({id}) is invalid or object already exist {self.queryset.filter(id=id).count()}")
+        if id:
+            if self.queryset.filter(id=id).count() != 0:
+                return Conflict(f"{id} already taken")
+            return CreationSuccessful(f"Created {self.singular_name}", self.model.deserialize(request.body.decode("utf-8"), id).serialize(request))
 
-    def delete(self, request:HttpRequest, id:int=None, *args, **kwargs):
+        # Else if trying to put on collection
+        return NotAllowed("You are trying to emplace on a collection. Instead use POST to create or use an id")
+
+    def delete(self, request:HttpRequest, id:int=None, *args, **kwargs) -> APIResponse:
         """
          Delete specific
         """
         if id:
             queryset = self.queryset.filter(id=id)
+            if queryset.count() == 0:
+                return NotFound(f"No {self.singular_name} with id {id}")
             obj_serialized = queryset.first().serialize(request)
             queryset.delete()
-            return APIResponse(200, "", obj_serialized)
+            return QuerySuccessful(f"Deleted {self.singular_name}", obj_serialized)
+
+        # Else if trying to delete on collection
         return NotAllowed()
 
-    def post(self, request:HttpRequest, id:int=None, *args, **kwargs):
+    def post(self, request:HttpRequest, id:int=None, *args, **kwargs) -> APIResponse:
         """
          Create specific in collection
         """
-        if id and self.queryset.filter(id=id).count():
-            return NotAllowed("You cannot specify an id when trying to create a new object. Use PUT to emplace")
-        return APIResponse(200, "", self.model.deserialize(request.body.decode("utf-8"), id).serialize(request))
+        if id:
+            return NotAllowed("You are trying to create at a specific id. Instead use PUT to emplace or use no id")
+
+        # Else if trying to post on collection
+        return CreationSuccessful(f"Created {self.singular_name}", self.model.deserialize(request.body.decode("utf-8"), id).serialize(request))

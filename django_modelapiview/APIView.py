@@ -74,7 +74,7 @@ class JSONMixin(object):
         data = {}
         if id:
             data['id'] = id
-        elif raw_data['id']:
+        elif 'id' in raw_data:
             data['id'] = raw_data['id']
         m2m_data = {}
 
