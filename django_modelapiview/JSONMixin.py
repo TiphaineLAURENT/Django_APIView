@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models import QuerySet
 from django.core.files.base import File
 from django.http import HttpRequest
+from django.conf import settings
 
 import json
 
@@ -21,9 +22,9 @@ class JSONMixin(object):
 
     def get_url(self, request:HttpRequest=None) -> str:
         if request is not None:
-            return request.build_absolute_uri(f"{self._meta.verbose_name_plural}/{self.id}")
+            return request.build_absolute_uri(f"/{request.get_full_path_info().split('/')[1]}/{self._meta.verbose_name_plural}/{self.id}")
         else:
-            return f"{self._meta.verbose_name_plural}/{self.id}"
+            return f"/{self._meta.verbose_name_plural}/{self.id}"
 
     def serialize(self, request:HttpRequest=None) -> dict:
         """
