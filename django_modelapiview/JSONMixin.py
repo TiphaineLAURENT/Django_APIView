@@ -35,7 +35,7 @@ class JSONMixin(object):
         for field_name in self.json_fields:
             field = getattr(self, field_name)
             if issubclass(field.__class__, models.manager.BaseManager):
-                value = [{'id': related.id, 'url': related.get_url(request)} for related in field.all().only('id')]
+                value = [{'id': related.id, 'url': related.get_url(request)} if isinstance(related, JSONMixin) else {'id': related.id}for related in field.all().only('id')]
             elif hasattr(field, 'id'):
                 value = {'id': field.id, 'url': field.get_url(request)}
             elif callable(field):
