@@ -114,12 +114,3 @@ class InvalidToken(APIResponse):
 
     def __init__(self, reason:str, **kwargs):
         super().__init__(HTTPStatus.UNAUTHORIZED, f"Invalid token: {reason}", **kwargs)
-
-
-class TokenExpired(InvalidToken):
-    """
-     Invalid token: Token expired
-    """
-
-    def __init__(self, **kwargs):
-        super().__init__("Token expired")
