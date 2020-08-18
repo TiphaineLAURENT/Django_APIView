@@ -35,7 +35,7 @@ class Token(object):
         self._body = signing.loads(self._signed_data, max_age=self._max_age)
 
     def is_signed(self):
-        return self._sign_data is not None
+        return self._signed_data is not None
 
     def is_unsigned(self):
         return self._body is not None
