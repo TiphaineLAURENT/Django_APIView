@@ -10,7 +10,5 @@ def catch_exceptions(view_function) -> APIResponse:
         try:
             return view_function(*args, **kwargs)
         except Exception as e:
-            print(*args)
-            print(*kwargs)
             return ExceptionCaught(e)
     return wraps(view_function)(wrapped_view)

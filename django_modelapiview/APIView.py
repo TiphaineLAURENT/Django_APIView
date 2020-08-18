@@ -43,6 +43,7 @@ class APIView(RouteView):
     plural_name:str = None
     enforce_authentification:bool = False
     http_method_names:List[str] = ["get", "post", "put", "patch", "delete", "head", "options"]
+    query_parameters:List[dict] = [('limit', None)]
 
     _permissions_match_table = {
         'GET': "view",
@@ -81,10 +82,14 @@ class APIView(RouteView):
         if self.plural_name is None:
             self.plural_name = self.model._meta.verbose_name_plural or f"{self.model.__name__}s"
 
-    @catch_exceptions
+    # @catch_exceptions
     @csrf_exempt
     def dispatch(self, request:HttpRequest, *args, **kwargs) -> APIResponse:
         headers = dict(request.headers)
+
+        request.GET = request.GET.dict()
+        for (parameter, default) in self.query_parameters:
+            kwargs[parameter] = int(request.GET.pop(parameter)) if parameter in request.GET else default
 
         if not self.enforce_authentification:
             return super().dispatch(request, *args, **kwargs)
@@ -110,7 +115,7 @@ class APIView(RouteView):
 
         return super().dispatch(*args, **kwargs)
 
-    def get(self, request:HttpRequest, id:int=None, *args, **kwargs) -> APIResponse:
+    def get(self, request:HttpRequest, id:int=None, limit:int=None, *args, **kwargs) -> APIResponse:
         """
          Retrieve specific or collection
         """
@@ -118,10 +123,11 @@ class APIView(RouteView):
             queryset = self.queryset.filter(id=id)
             if queryset.count() == 0:
                 return NotFound(f"No {self.singular_name} with id {id}")
-            return QuerySuccessful(f"Retrieved {self.singular_name}", data=queryset.first().serialize(request))
+            return QuerySuccessful(f"{limit}Retrieved {self.singular_name}", data=queryset.first().serialize(request))
 
         # Else if trying to get on collection
-        return QuerySuccessful(f"Retrieved {self.plural_name}", data=[obj.serialize(request) for obj in self.queryset])
+        queryset = self.queryset.filter(**request.GET)
+        return QuerySuccessful(f"Retrieved {self.plural_name}", data=[obj.serialize(request) for obj in queryset[:limit]])
 
     def patch(self, request:HttpRequest, id:int=None, *args, **kwargs) -> APIResponse:
         """
