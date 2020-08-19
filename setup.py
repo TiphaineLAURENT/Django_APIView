@@ -14,7 +14,7 @@ from setuptools import setup
 
 setup(
     name='django_modelapiview',
-    version='1.3.1',
+    version='1.3.2',
     url='https://github.com/TiphaineLAURENT/Django_APIView',
     license='BSD',
     author='Tiphaine LAURENT',
