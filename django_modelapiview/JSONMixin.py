@@ -87,7 +87,7 @@ class JSONMixin(object):
                 data[f"{field_name}_id"] = field_value
             else:
                 data[field_name] = field_value
-        
+
         queryset = cls.objects.filter(id=id)
         if queryset.count():
             queryset.update(**data)
@@ -97,7 +97,12 @@ class JSONMixin(object):
         if save:
             obj.save()
             for (m2m_name, m2m_list) in m2m_data.items():
-                for m2m_value in m2m_list:
-                    getattr(obj, m2m_name).add(m2m_value['id'])
+                if isinstance(m2m_list[0], int):
+                    getattr(obj, m2m_name).set(m2m_list)
+                else:
+                    field = getattr(obj, m2m_name)
+                    field.clear()
+                    for m2m_value in m2m_list:
+                        field.add(m2m_value['id'])
             obj.save()
         return obj

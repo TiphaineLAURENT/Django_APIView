@@ -82,7 +82,7 @@ class APIView(RouteView):
         if self.plural_name is None:
             self.plural_name = self.model._meta.verbose_name_plural or f"{self.model.__name__}s"
 
-    # @catch_exceptions
+    @catch_exceptions
     @csrf_exempt
     def dispatch(self, request:HttpRequest, *args, **kwargs) -> APIResponse:
         headers = dict(request.headers)
