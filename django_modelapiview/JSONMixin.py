@@ -5,6 +5,7 @@ from django.http import HttpRequest
 from django.conf import settings
 
 import json
+import operator
 
 from typing import List
 
@@ -101,8 +102,6 @@ class JSONMixin(object):
                     getattr(obj, m2m_name).set(m2m_list)
                 else:
                     field = getattr(obj, m2m_name)
-                    field.clear()
-                    for m2m_value in m2m_list:
-                        field.add(m2m_value['id'])
+                    field.set(map(operator.itemgetter('id'), m2m_list))
             obj.save()
         return obj
