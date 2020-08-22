@@ -70,11 +70,7 @@ class JSONMixin(object):
         """
         raw_data = json.loads(serialized_data)
 
-        data = {}
-        if id:
-            data['id'] = id
-        elif 'id' in raw_data:
-            data['id'] = raw_data['id']
+        data = {'id': id or raw_data.get('id', None)}
         m2m_data = {}
 
         for (field_name, field_value) in raw_data.items():
@@ -82,9 +78,15 @@ class JSONMixin(object):
                 continue
 
             field = cls._meta.get_field(field_name)
-            if field.remote_field and isinstance(field.remote_field, models.ManyToManyRel):
+            if field.remote_field and field.remote_field.many_to_many:
                 m2m_data[field_name] = field_value
-            elif field.remote_field and isinstance(field.remote_field, models.ManyToOneRel) and not field_name.endswith("_id"):
+            elif field.remote_field and field.remote_field.many_to_one: # separated 1:N from N:1
+                if isinstance(field_value[0], dict):
+                    values = map(operator.itemgetter('id'), field_value)
+                    m2m_data[field_name] = field.remote_field.model.objects.filter(id__in=values)
+                else:
+                    m2m_data[field_name] = field.remote_field.model.objects.filter(id__in=field_value)
+            elif field.remote_field and field.remote_field.one_to_many and not field_name.endswith("_id"):
                 data[f"{field_name}_id"] = field_value
             else:
                 data[field_name] = field_value
@@ -96,12 +98,13 @@ class JSONMixin(object):
         else:
             obj = cls(**data)
         if save:
-            obj.save()
+            if not obj.id:
+                obj.save() # Create the id propery if nonexistent
             for (m2m_name, m2m_list) in m2m_data.items():
-                if isinstance(m2m_list[0], int):
-                    getattr(obj, m2m_name).set(m2m_list)
-                else:
+                if isinstance(m2m_list[0], dict):
                     field = getattr(obj, m2m_name)
                     field.set(map(operator.itemgetter('id'), m2m_list))
+                else:
+                    getattr(obj, m2m_name).set(m2m_list)
             obj.save()
         return obj

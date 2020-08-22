@@ -97,7 +97,7 @@ class APIView(RouteView):
         if not 'Authorization' in headers:
             return InvalidToken("Authentification required")
 
-        token = Token(signed_data=headers['Authorization'].split("")[1])
+        token = Token(signed_data=headers['Authorization'].split(" ")[1])
         try:
             token.unsign()
         except BadSignature:
