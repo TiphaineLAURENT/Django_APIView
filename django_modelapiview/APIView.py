@@ -7,7 +7,7 @@ from django.core.signing import BadSignature, SignatureExpired
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 
-from typing import List
+from typing import List, Tuple, Callable
 from http import HTTPStatus
 
 from django_routeview import RouteView, urlpatterns
@@ -43,7 +43,10 @@ class APIView(RouteView):
     plural_name:str = None
     enforce_authentification:bool = False
     http_method_names:List[str] = ["get", "post", "put", "patch", "delete", "head", "options"]
-    query_parameters:List[dict] = [('limit', None)]
+    query_parameters:List[Tuple[str, Callable[[QuerySet, object], QuerySet]]] = [
+        ('order_by', lambda queryset, field_names: queryset.order_by(*field_names.split(",")) if field_names else queryset),
+        ('limit', lambda queryset, limit: queryset[:int(limit)] if limit else queryset),
+    ]
 
     _permissions_match_table = {
         'GET': "view",
@@ -82,66 +85,80 @@ class APIView(RouteView):
         if self.plural_name is None:
             self.plural_name = self.model._meta.verbose_name_plural or f"{self.model.__name__}s"
 
-    @catch_exceptions
+    def _parse_parameters(self, request:HttpRequest) -> QuerySet:
+        get_parameters = request.GET.dict()
+
+        queries = {query[0]: get_parameters.pop(query[0], None) for query in self.query_parameters}
+
+        queryset = self.queryset
+        for (filter_name, filter_value) in get_parameters.items():
+            if "," in filter_value:
+                queryset = queryset.filter((filter_name, filter_value.split(",")))
+            else:
+                queryset = queryset.filter((filter_name, filter_value))
+
+        for (query_name, transform) in self.query_parameters:
+            queryset = transform(queryset, queries.get(query_name))
+
+        return queryset
+
+    # @catch_exceptions
     @csrf_exempt
-    def dispatch(self, request:HttpRequest, *args, **kwargs) -> APIResponse:
+    def dispatch(self, request:HttpRequest, id:int=None) -> APIResponse:
         headers = dict(request.headers)
 
-        request.GET = request.GET.dict()
-        for (parameter, default) in self.query_parameters:
-            kwargs[parameter] = int(request.GET.pop(parameter)) if parameter in request.GET else default
+        queryset = self._parse_parameters(request)
+        if id:
+            queryset = queryset.filter(id=id)
 
-        if not self.enforce_authentification:
-            return super().dispatch(request, *args, **kwargs)
+        if self.enforce_authentification:
 
-        if not 'Authorization' in headers:
-            return InvalidToken("Authentification required")
+            if not 'Authorization' in headers:
+                return InvalidToken("Authentification required")
 
-        token = Token(signed_data=headers['Authorization'].split(" ")[1])
-        try:
-            token.unsign()
-        except BadSignature:
-            return InvalidToken("Invalid signature")
-        except SignatureExpired:
-            return InvalidToken("Token expired")
+            token = Token(signed_data=headers['Authorization'].split(" ")[1])
+            try:
+                token.unsign()
+            except BadSignature:
+                return InvalidToken("Invalid signature")
+            except SignatureExpired:
+                return InvalidToken("Token expired")
 
-        try:
-            user = get_user_model().objects.get(id=token.uid)
-        except (KeyError, ObjectDoesNotExist):
-            return InvalidToken("Invalid body")
+            try:
+                user = get_user_model().objects.get(id=token.uid)
+            except (KeyError, ObjectDoesNotExist):
+                return InvalidToken("Invalid body")
 
-        if not user.has_perm(f'api.{self.match_table[request.method]}_{self.verbose_name}') and not user.id == request.path_info.split('/')[-1].split('?')[0]:
-            return NotAllowed()
+            if not user.has_perm(f'api.{self.match_table[request.method]}_{self.verbose_name}') and not user.id == request.path_info.split('/')[-1].split('?')[0]:
+                return NotAllowed()
 
-        return super().dispatch(*args, **kwargs)
+        return super().dispatch(request, queryset, id)
 
-    def get(self, request:HttpRequest, id:int=None, limit:int=None, *args, **kwargs) -> APIResponse:
+    def get(self, request:HttpRequest, queryset:QuerySet, id:int=None) -> APIResponse:
         """
          Retrieve specific or collection
         """
         if id:
-            queryset = self.queryset.filter(id=id)
             if queryset.count() == 0:
                 return NotFound(f"No {self.singular_name} with id {id}")
-            return QuerySuccessful(f"{limit}Retrieved {self.singular_name}", data=queryset.first().serialize(request))
+            return QuerySuccessful(f"Retrieved {self.singular_name}", data=queryset.first().serialize(request))
 
         # Else if trying to get on collection
-        queryset = self.queryset.filter(**request.GET)
-        return QuerySuccessful(f"Retrieved {self.plural_name}", data=[obj.serialize(request) for obj in queryset[:limit]])
+        return QuerySuccessful(f"Retrieved {self.plural_name}", data=[obj.serialize(request) for obj in queryset])
 
-    def patch(self, request:HttpRequest, id:int=None, *args, **kwargs) -> APIResponse:
+    def patch(self, request:HttpRequest, queryset:QuerySet, id:int=None) -> APIResponse:
         """
          Update specific
         """
         if id:
-            if self.queryset.filter(id=id).count() == 0:
+            if self.queryset.count() == 0:
                 return NotFound(f"No {self.singular_name} with id {id}")
             return QuerySuccessful(f"Updated {self.singular_name}", self.model.deserialize(request.body.decode("utf-8"), id).serialize(request))
 
         # Else if trying to patch on collection
         return NotAllowed()
 
-    def put(self, request:HttpRequest, id:int=None, *args, **kwargs) -> APIResponse:
+    def put(self, request:HttpRequest, queryset:QuerySet, id:int=None) -> APIResponse:
         """
          Emplace specific
         """
@@ -153,7 +170,7 @@ class APIView(RouteView):
         # Else if trying to put on collection
         return NotAllowed("You are trying to emplace on a collection. Instead use POST to create or use an id")
 
-    def delete(self, request:HttpRequest, id:int=None, *args, **kwargs) -> APIResponse:
+    def delete(self, request:HttpRequest, queryset:QuerySet, id:int=None) -> APIResponse:
         """
          Delete specific
         """
@@ -168,7 +185,7 @@ class APIView(RouteView):
         # Else if trying to delete on collection
         return NotAllowed()
 
-    def post(self, request:HttpRequest, id:int=None, *args, **kwargs) -> APIResponse:
+    def post(self, request:HttpRequest, queryset:QuerySet, id:int=None) -> APIResponse:
         """
          Create specific in collection
         """
