@@ -102,7 +102,7 @@ class APIView(RouteView):
 
         return queryset
 
-    # @catch_exceptions
+    @catch_exceptions
     @csrf_exempt
     def dispatch(self, request:HttpRequest, id:int=None) -> APIResponse:
         headers = dict(request.headers)
@@ -151,7 +151,7 @@ class APIView(RouteView):
          Update specific
         """
         if id:
-            if self.queryset.count() == 0:
+            if queryset.count() == 0:
                 return NotFound(f"No {self.singular_name} with id {id}")
             return QuerySuccessful(f"Updated {self.singular_name}", self.model.deserialize(request.body.decode("utf-8"), id).serialize(request))
 
@@ -163,7 +163,7 @@ class APIView(RouteView):
          Emplace specific
         """
         if id:
-            if self.queryset.filter(id=id).count() != 0:
+            if queryset.count() != 0:
                 return Conflict(f"{id} already taken")
             return CreationSuccessful(f"Created {self.singular_name}", self.model.deserialize(request.body.decode("utf-8"), id).serialize(request))
 
@@ -175,7 +175,6 @@ class APIView(RouteView):
          Delete specific
         """
         if id:
-            queryset = self.queryset.filter(id=id)
             if queryset.count() == 0:
                 return NotFound(f"No {self.singular_name} with id {id}")
             obj_serialized = queryset.first().serialize(request)
