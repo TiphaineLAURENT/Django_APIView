@@ -17,7 +17,7 @@ class MyModel(JSONMixin, models.Model):
     add a json_fields list
     """
 
-    json_fields = ['text', 'image', 'fk', 'fk_reverse', 'm2m', 'my_method']
+    json_fields:list[str] = ['text', 'image', 'fk', 'fk_reverse', 'm2m', 'my_method']
 
     text = models.TextField()
     image = models.ImageField()
@@ -38,14 +38,18 @@ from django_modelapiview import APIView
 from .models import MyModel
 
 class MyView(APIView):
-    model = MyModel # Your model
-    route = "mymodels" # The url to access your collection
+    model:JSONMixin = MyModel # Your model
+    route:str = "mymodels" # The url to access your collection
 
-    queryset = MyModel.objects.all() # A custom base queryset (will be affected by query filters)
-    singular_name = "my model" # Singular name of your model for reason message
-    plural_name = "my models" # Plural name of your model for reason message
-    http_method_names = ['head', 'get', 'patch', 'post'] # The list of HTTP method names that this view will accept.
-    enforce_authentification = True # Should this model be restricted with Token access
+    queryset:QuerySet = MyModel.objects.all() # A custom base queryset (will be affected by query filters)
+    singular_name:str = "my model" # Singular name of your model for reason message
+    plural_name:str = "my models" # Plural name of your model for reason message
+    http_method_names:list[str] = ['head', 'get', 'patch', 'post'] # The list of HTTP method names that this view will accept.
+    enforce_authentification:bool = True # Should this model be restricted with Token access
+    query_parameters:list[tuple[str, Callable[[QuerySet, object], QuerySet]]] = [
+        ('order_by', lambda queryset, field_names: queryset.order_by(*field_names.split(",")) if field_names else queryset),
+        ('limit', lambda queryset, limit: queryset[:int(limit)] if limit else queryset), # Should be last since sliced QuerySet can't be filtered anymore
+    ]
 ```
 
 ```py
