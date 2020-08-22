@@ -38,9 +38,11 @@ from django_modelapiview import APIView
 from .models import MyModel
 
 class MyView(APIView):
+    # Required
     model:JSONMixin = MyModel # Your model
     route:str = "mymodels" # The url to access your collection
 
+    # Optional
     queryset:QuerySet = MyModel.objects.all() # A custom base queryset (will be affected by query filters)
     singular_name:str = "my model" # Singular name of your model for reason message
     plural_name:str = "my models" # Plural name of your model for reason message

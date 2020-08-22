@@ -85,12 +85,11 @@ class APIView(RouteView):
         if self.plural_name is None:
             self.plural_name = self.model._meta.verbose_name_plural or f"{self.model.__name__}s"
 
-    def _parse_parameters(self, request:HttpRequest) -> QuerySet:
+    def _parse_parameters(self, request:HttpRequest, queryset:QuerySet) -> QuerySet:
         get_parameters = request.GET.dict()
 
         queries = {query[0]: get_parameters.pop(query[0], None) for query in self.query_parameters}
 
-        queryset = self.queryset
         for (filter_name, filter_value) in get_parameters.items():
             if "," in filter_value:
                 queryset = queryset.filter((filter_name, filter_value.split(",")))
@@ -107,9 +106,7 @@ class APIView(RouteView):
     def dispatch(self, request:HttpRequest, id:int=None) -> APIResponse:
         headers = dict(request.headers)
 
-        queryset = self._parse_parameters(request)
-        if id:
-            queryset = queryset.filter(id=id)
+        queryset = self._parse_parameters(request, self.queryset.filter(id=id) if id else self.queryset)
 
         if self.enforce_authentification:
 
@@ -139,7 +136,7 @@ class APIView(RouteView):
          Retrieve specific or collection
         """
         if id:
-            if queryset.count() == 0:
+            if not queryset.exists():
                 return NotFound(f"No {self.singular_name} with id {id}")
             return QuerySuccessful(f"Retrieved {self.singular_name}", data=queryset.first().serialize(request))
 
@@ -151,7 +148,7 @@ class APIView(RouteView):
          Update specific
         """
         if id:
-            if queryset.count() == 0:
+            if not queryset.exists():
                 return NotFound(f"No {self.singular_name} with id {id}")
             return QuerySuccessful(f"Updated {self.singular_name}", self.model.deserialize(request.body.decode("utf-8"), id).serialize(request))
 
@@ -163,7 +160,7 @@ class APIView(RouteView):
          Emplace specific
         """
         if id:
-            if queryset.count() != 0:
+            if queryset.exists():
                 return Conflict(f"{id} already taken")
             return CreationSuccessful(f"Created {self.singular_name}", self.model.deserialize(request.body.decode("utf-8"), id).serialize(request))
 
@@ -175,7 +172,7 @@ class APIView(RouteView):
          Delete specific
         """
         if id:
-            if queryset.count() == 0:
+            if not queryset.exists():
                 return NotFound(f"No {self.singular_name} with id {id}")
             obj_serialized = queryset.first().serialize(request)
             queryset.delete()
