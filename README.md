@@ -1,2 +1,61 @@
 # Django_APIView
+
 Implement a base generic view for handling model RESTful endpoints
+
+## Usage
+
+```py
+# models.py
+
+from django.db import models
+
+from django_modelapiview import JSONMixin
+
+class MyModel(JSONMixin, models.Model):
+    """
+    Declare your model as you usually do but
+    add a json_fields list
+    """
+
+    json_fields = ['text', 'image', 'fk', 'fk_reverse', 'm2m', 'my_method']
+
+    text = models.TextField()
+    image = models.ImageField()
+
+    fk = models.ForeignKey(...)
+    # fk_reverse
+    m2m = models.ManyToManyField(...)
+
+    def my_method(self):
+        return "my custom value"
+```
+
+```py
+# views.py
+
+from django_modelapiview import APIView
+
+from .models import MyModel
+
+class MyView(APIView):
+    model = MyModel # Your model
+    route = "mymodels" # The url to access your collection
+
+    queryset = MyModel.objects.all() # A custom base queryset (will be affected by query filters)
+    singular_name = "my model" # Singular name of your model for reason message
+    plural_name = "my models" # Plural name of your model for reason message
+    http_method_names = ['head', 'get', 'patch', 'post'] # The list of HTTP method names that this view will accept.
+    enforce_authentification = True # Should this model be restricted with Token access
+```
+
+```py
+# urls.py
+
+from django.urls import path, include
+
+from . import views
+
+urlpatterns = [
+    path("", include("django_routeview")), # Django RouteView are used as based class for APIView in order to automatically register them
+]
+```
