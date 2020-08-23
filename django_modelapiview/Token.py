@@ -5,7 +5,7 @@ from datetime import timedelta
 
 class StillSigned(ValueError):
 
-    def __init__(self, **kwargs):
+    def __init__(self):
         super().__init__("Token still signed")
 
 
@@ -22,10 +22,10 @@ class Token(object):
         self._body = body
         self._signed_data = signed_data
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self._signed_data if self.is_signed() else str(self._body)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Token id({id(self)}): {'S' if self.is_signed() else 'Not s'}igned>"
 
     def sign(self) -> None:
@@ -34,10 +34,10 @@ class Token(object):
     def unsign(self) -> None:
         self._body = signing.loads(self._signed_data, max_age=self._max_age)
 
-    def is_signed(self):
+    def is_signed(self) -> bool:
         return self._signed_data is not None
 
-    def is_unsigned(self):
+    def is_unsigned(self) -> bool:
         return self._body is not None
 
     @property

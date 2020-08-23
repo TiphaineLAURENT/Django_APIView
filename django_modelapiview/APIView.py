@@ -126,7 +126,7 @@ class APIView(RouteView):
             except (KeyError, ObjectDoesNotExist):
                 return InvalidToken("Invalid body")
 
-            if not user.has_perm(f'api.{self.match_table[request.method]}_{self.verbose_name}') and not user.id == request.path_info.split('/')[-1].split('?')[0]:
+            if not user.has_perm(f'api.{self._permissions_match_table[request.method]}_{self.singular_name}') and not request.path_info.split("?")[0].strip("/").endswith(str(user.id)):
                 return NotAllowed()
 
         return super().dispatch(request, queryset, id)
