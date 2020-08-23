@@ -56,24 +56,18 @@ class APIView(RouteView):
         'DELETE': "delete"
     }
 
-    def _add_route_(self) -> None:
-        if self.route is not None:
-            if self.name is None:
-                self.name = self.__name__
-            if self.route is None:
-                self.route = self.plural_name or self.model._meta.verbose_name_plural or f"{self.model.__name__}s"
+    def _init_properties(self) -> None:
+        if self.__name__ == "APIView":
+            return
 
-            self.route = f"{self.route.rstrip('/')}/"
-            urlpatterns.extend((
-                path(self.route, self.as_view(), name=self.name),
-                path(f"{self.route}<int:id>", self.as_view(), name=self.name)
-            ))
-
-    def __init__(self, *args, **kwargs):
         if self.model is None:
             raise ValueError(f"APIView {self.__name__} requires a model")
 
-        super().__init__(*args, **kwargs)
+        if self.name is None:
+            self.name = self.__name__
+
+        if self.route is None:
+            self.route = self.plural_name or self.model._meta.verbose_name_plural or f"{self.model.__name__}s"
 
         if self.queryset is None:
             self.queryset = self.model.objects.all()
@@ -83,6 +77,16 @@ class APIView(RouteView):
 
         if self.plural_name is None:
             self.plural_name = self.model._meta.verbose_name_plural or f"{self.model.__name__}s"
+
+    def _add_route_(self) -> None:
+        if self.__name__ == "APIView":
+            return
+
+        self.route = f"{self.route.rstrip('/')}/"
+        urlpatterns.extend((
+            path(self.route, self.as_view(), name=self.name),
+            path(f"{self.route}<int:id>", self.as_view(), name=self.name)
+        ))
 
     def _parse_parameters(self, request:HttpRequest, queryset:QuerySet) -> QuerySet:
         get_parameters = request.GET.dict()
