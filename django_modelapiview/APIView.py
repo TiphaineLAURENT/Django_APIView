@@ -63,12 +63,11 @@ class APIView(RouteView):
             if self.route is None:
                 self.route = self.plural_name or self.model._meta.verbose_name_plural or f"{self.model.__name__}s"
 
-            if not self.route.endswith("/"):
-                urlpatterns.append(path(f"{self.route}/", self.as_view(), name=self.name))
-                urlpatterns.append(path(f"{self.route}/<int:id>", self.as_view(), name=self.name))
-            else:
-                urlpatterns.append(path(self.route, self.as_view(), name=self.name))
-                urlpatterns.append(path(f"{self.route}<int:id>", self.as_view(), name=self.name))
+            self.route = f"{self.route.rstrip('/')}/"
+            urlpatterns.extend((
+                path(self.route, self.as_view(), name=self.name),
+                path(f"{self.route}<int:id>", self.as_view(), name=self.name)
+            ))
 
     def __init__(self, *args, **kwargs):
         if self.model is None:
