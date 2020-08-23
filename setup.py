@@ -27,8 +27,8 @@ setup(
     include_package_data=True,
     platforms='any',
     install_requires=[
-        'Django',
-	'django_routeview'
+        'Django>=3.1',
+	'django_routeview>=1.1.0'
     ],
     classifiers=[
         'Environment :: Web Environment',
