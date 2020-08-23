@@ -65,3 +65,25 @@ urlpatterns = [
     path("", include("django_routeview")), # Django RouteView are used as based class for APIView in order to automatically register them
 ]
 ```
+
+## Using base views
+
+Django ModelAPIView provides 2 base views:
+* LoginView: to handle authentification (using the default Django authentification system)
+* URLsView: to list the urls availables
+
+### Usage
+
+```py
+# urls.py
+
+from django.urls import path
+
+from django_modelapiview.views import LoginView, URLsView
+
+urlpatterns = [
+    ...
+    path("login", LoginView.as_view(), name="login"),
+    path("", URLsView.as_view(), name="urls")
+]
+```
