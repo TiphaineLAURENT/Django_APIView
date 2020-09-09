@@ -63,7 +63,7 @@ class NotFound(APIResponse):
         super().__init__(HTTPStatus.NOT_FOUND, reason, **kwargs)
 
 
-class NotImplemented(APIResponse):
+class MethodNotImplemented(APIResponse):
     """
      Verb not implemented
     """
