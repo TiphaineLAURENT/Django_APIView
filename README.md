@@ -79,11 +79,16 @@ Django ModelAPIView provides 2 base views:
 
 from django.urls import path
 
-from django_modelapiview.views import LoginView, URLsView
+from django_modelapiview.views import LoginView, URLsView # Importing them is enough
+```
 
-urlpatterns = [
-    ...
-    path("login", LoginView.as_view(), name="login"),
-    path("", URLsView.as_view(), name="urls")
-]
+```sh
+# You can use query parameters like order_by or limit (or customs):
+https://myhost.com/api/mymodel/?order_by=-id&limit=1 # Will inverse order by id and limit to one : get the last id
+
+# Or you can use Django defined filters:
+https://myhost.com/api/mymodel/?id__in=1,2,3&foreignkey__id__in=2,3&field__lte=5
+
+# And finally both:
+https://myhost.com/api/mymodel/?manytomany__in=2,3&field__lte=5&limit=10
 ```
