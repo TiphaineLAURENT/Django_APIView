@@ -80,7 +80,7 @@ class ExceptionCaught(APIResponse):
     """
 
     def __init__(self, exception:Exception, **kwargs):
-        super().__init__(HTTPStatus.INTERNAL_SERVER_ERROR, f"Exception caught: {str(exception)}", **kwargs)
+        super().__init__(HTTPStatus.BAD_REQUEST, f"Exception caught: {str(exception)}", **kwargs)
 
 
 class Conflict(APIResponse):

@@ -82,13 +82,13 @@ class ModelAPIView(APIView):
 
         queries = {query[0]: get_parameters.pop(query[0], None) for query in self.query_parameters}
 
-        for (filter_name, filter_value) in get_parameters.items():
+        for filter_name, filter_value in get_parameters.items():
             if "," in filter_value:
                 queryset = queryset.filter((filter_name, filter_value.split(",")))
             else:
                 queryset = queryset.filter((filter_name, filter_value))
 
-        for (query_name, transform) in self.query_parameters:
+        for query_name, transform in self.query_parameters:
             queryset = transform(queryset, queries.get(query_name))
 
         return queryset
