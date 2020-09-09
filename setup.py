@@ -14,12 +14,12 @@ from setuptools import setup
 
 setup(
     name='django_modelapiview',
-    version='1.4.2',
+    version='1.4.3',
     url='https://github.com/TiphaineLAURENT/Django_APIView',
     license='BSD',
     author='Tiphaine LAURENT',
     author_email='tip.lau@hotmail.fr',
-    description='An APIView to handles its model endpoints',
+    description='Two view classes to handle API endpoints',
     long_description=long_description,
     long_description_content_type='text/markdown',
     packages=['django_modelapiview'],
