@@ -39,6 +39,22 @@ from .models import MyModel
 
 class MyView(APIView):
     # Required
+    route:str = "myroute" # The url to access your view
+
+    # Optional
+    enforce_authentification:bool = True # Should this model be restricted with Token access
+    def get(self, request, *args, **kwargs):... # One of head, options, get...
+```
+
+```py
+# views.py
+
+from django_modelapiview import ModelAPIView
+
+from .models import MyModel
+
+class MyModelView(ModelAPIView):
+    # Required
     model:JSONMixin = MyModel # Your model
     route:str = "mymodels" # The url to access your collection
 
@@ -46,12 +62,12 @@ class MyView(APIView):
     queryset:QuerySet = MyModel.objects.all() # A custom base queryset (will be affected by query filters)
     singular_name:str = "my model" # Singular name of your model for reason message
     plural_name:str = "my models" # Plural name of your model for reason message
-    http_method_names:list[str] = ['head', 'get', 'patch', 'post'] # The list of HTTP method names that this view will accept.
     enforce_authentification:bool = True # Should this model be restricted with Token access
     query_parameters:list[tuple[str, Callable[[QuerySet, object], QuerySet]]] = [
         ('order_by', lambda queryset, field_names: queryset.order_by(*field_names.split(",")) if field_names else queryset),
         ('limit', lambda queryset, limit: queryset[:int(limit)] if limit else queryset), # Should be last since sliced QuerySet can't be filtered anymore
     ]
+    def get(self, request, *args, **kwargs):... # One of head, options, get...
 ```
 
 ```py
@@ -64,6 +80,17 @@ from . import views
 urlpatterns = [
     path("", include("django_routeview")), # Django RouteView are used as based class for APIView in order to automatically register them
 ]
+```
+
+```sh
+# You can use query parameters like order_by or limit (or customs):
+https://myhost.com/api/mymodel/?order_by=-id&limit=1 # Will inverse order by id and limit to one : get the last id
+
+# Or you can use Django defined filters:
+https://myhost.com/api/mymodel/?id__in=1,2,3&foreignkey__id__in=2,3&field__lte=5
+
+# And finally both:
+https://myhost.com/api/mymodel/?manytomany__in=2,3&field__lte=5&limit=10
 ```
 
 ## Using base views
@@ -80,15 +107,4 @@ Django ModelAPIView provides 2 base views:
 from django.urls import path
 
 from django_modelapiview.views import LoginView, URLsView # Importing them is enough
-```
-
-```sh
-# You can use query parameters like order_by or limit (or customs):
-https://myhost.com/api/mymodel/?order_by=-id&limit=1 # Will inverse order by id and limit to one : get the last id
-
-# Or you can use Django defined filters:
-https://myhost.com/api/mymodel/?id__in=1,2,3&foreignkey__id__in=2,3&field__lte=5
-
-# And finally both:
-https://myhost.com/api/mymodel/?manytomany__in=2,3&field__lte=5&limit=10
 ```
