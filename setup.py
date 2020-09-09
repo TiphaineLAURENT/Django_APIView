@@ -14,7 +14,7 @@ from setuptools import setup
 
 setup(
     name='django_modelapiview',
-    version='1.1.3',
+    version='1.4.0',
     url='https://github.com/TiphaineLAURENT/Django_APIView',
     license='BSD',
     author='Tiphaine LAURENT',
@@ -27,8 +27,8 @@ setup(
     include_package_data=True,
     platforms='any',
     install_requires=[
-        'Django',
-	'django_routeview'
+        'Django>=3.1',
+	'django_routeview>=1.1.0'
     ],
     classifiers=[
         'Environment :: Web Environment',

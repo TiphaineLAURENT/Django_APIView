@@ -112,7 +112,7 @@ class APIView(RouteView):
 
         return queryset
 
-    # @catch_exceptions
+    @catch_exceptions
     @csrf_exempt
     def dispatch(self, request:HttpRequest, id:int=None) -> APIResponse:
         headers = dict(request.headers)
