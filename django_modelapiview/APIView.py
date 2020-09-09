@@ -63,11 +63,8 @@ class APIView(RouteView):
         if self.model is None:
             raise ValueError(f"APIView {self.__name__} requires a model")
 
-        self.http_method_names = list()
         for cls in self.mro():
-            for method_name, method in vars(cls).items():
-                if hasattr(method, '__annotations__') and method_name != "dispatch" and method.__annotations__.get('return') == APIResponse:
-                    self.http_method_names.append(method_name)
+            self.http_method_names = [method_name for method_name, method in vars(cls).items() if hasattr(method, '__annotations__') and method_name != "dispatch" and method.__annotations__.get('return') == APIResponse]
             if self.http_method_names:
                 break
 
