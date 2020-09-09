@@ -2,8 +2,10 @@ from django.db import models
 from django.db.models import QuerySet
 from django.core.files.base import File
 from django.http import HttpRequest
+from django.conf import settings
 
 import json
+import operator
 
 from typing import List
 
@@ -21,9 +23,9 @@ class JSONMixin(object):
 
     def get_url(self, request:HttpRequest=None) -> str:
         if request is not None:
-            return request.build_absolute_uri(f"{self._meta.verbose_name_plural}/{self.id}")
+            return request.build_absolute_uri(f"/{request.get_full_path_info().split('/')[1]}/{self._meta.verbose_name_plural}/{self.id}")
         else:
-            return f"{self._meta.verbose_name_plural}/{self.id}"
+            return f"/{self._meta.verbose_name_plural}/{self.id}"
 
     def serialize(self, request:HttpRequest=None) -> dict:
         """
@@ -35,7 +37,7 @@ class JSONMixin(object):
         for field_name in self.json_fields:
             field = getattr(self, field_name)
             if issubclass(field.__class__, models.manager.BaseManager):
-                value = [{'id': related.id, 'url': related.get_url(request)} for related in field.all().only('id')]
+                value = [{'id': related.id, 'url': related.get_url(request)} if isinstance(related, JSONMixin) else {'id': related.id}for related in field.all().only('id')]
             elif hasattr(field, 'id'):
                 value = {'id': field.id, 'url': field.get_url(request)}
             elif callable(field):
@@ -43,13 +45,10 @@ class JSONMixin(object):
             elif issubclass(field.__class__, File):
                 if field:
                     if request is not None:
-                        print(f"build_absolute_uri({request.build_absolute_uri(field.url)}) from url({field.url})")
                         value = request.build_absolute_uri(field.url)
                     else:
-                        print(f"url({field.url})")
                         value = field.url
                 else:
-                    print("default")
                     value = ""
             else:
                 value = field
@@ -68,11 +67,7 @@ class JSONMixin(object):
         """
         raw_data = json.loads(serialized_data)
 
-        data = {}
-        if id:
-            data['id'] = id
-        elif 'id' in raw_data:
-            data['id'] = raw_data['id']
+        data = {'id': id or raw_data.get('id', None)}
         m2m_data = {}
 
         for (field_name, field_value) in raw_data.items():
@@ -80,13 +75,19 @@ class JSONMixin(object):
                 continue
 
             field = cls._meta.get_field(field_name)
-            if field.remote_field and isinstance(field.remote_field, models.ManyToManyRel):
+            if field.remote_field and field.remote_field.many_to_many:
                 m2m_data[field_name] = field_value
-            elif field.remote_field and isinstance(field.remote_field, models.ManyToOneRel) and not field_name.endswith("_id"):
+            elif field.remote_field and field.remote_field.many_to_one: # separated 1:N from N:1
+                if isinstance(field_value[0], dict):
+                    values = map(operator.itemgetter('id'), field_value)
+                    m2m_data[field_name] = field.remote_field.model.objects.filter(id__in=values)
+                else:
+                    m2m_data[field_name] = field.remote_field.model.objects.filter(id__in=field_value)
+            elif field.remote_field and field.remote_field.one_to_many and not field_name.endswith("_id"):
                 data[f"{field_name}_id"] = field_value
             else:
                 data[field_name] = field_value
-        
+
         queryset = cls.objects.filter(id=id)
         if queryset.count():
             queryset.update(**data)
@@ -94,9 +95,13 @@ class JSONMixin(object):
         else:
             obj = cls(**data)
         if save:
-            obj.save()
+            if not obj.id:
+                obj.save() # Create the id propery if nonexistent
             for (m2m_name, m2m_list) in m2m_data.items():
-                for m2m_value in m2m_list:
-                    getattr(obj, m2m_name).add(m2m_value['id'])
+                if isinstance(m2m_list[0], dict):
+                    field = getattr(obj, m2m_name)
+                    field.set(map(operator.itemgetter('id'), m2m_list))
+                else:
+                    getattr(obj, m2m_name).set(m2m_list)
             obj.save()
         return obj
