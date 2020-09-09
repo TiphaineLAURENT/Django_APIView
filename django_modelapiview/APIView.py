@@ -34,7 +34,7 @@ class APIView(RouteView):
 
      `enforce_authentification:bool:optional` Default to `False`
 
-     `http_method_names:list[str]:optional` Default to `["get", "post", "put", "patch", "delete", "head", "options"]`
+     `http_method_names:list[str]:optional` Default to `["head", "options", "get", "post", "put", "patch", "delete"]`
     """
 
     model:JSONMixin = None
@@ -60,38 +60,48 @@ class APIView(RouteView):
         if self.__name__ == "APIView":
             return
 
-        if self.model is None:
-            raise ValueError(f"APIView {self.__name__} requires a model")
-
         for cls in self.mro():
             self.http_method_names = [method_name for method_name, method in vars(cls).items() if hasattr(method, '__annotations__') and method_name != "dispatch" and method.__annotations__.get('return') == APIResponse]
             if self.http_method_names:
                 break
+            elif self.model is None:
+                raise ValueError(f"NonModel-APIView {self.__name__} requires a custom implementation of one of : head, options, get, post, put, patch, delete")
 
         if self.name is None:
             self.name = self.__name__
 
-        if self.route is None:
-            self.route = self.plural_name or self.model._meta.verbose_name_plural or f"{self.model.__name__}s"
+        if self.model is not None:
 
-        if self.queryset is None:
-            self.queryset = self.model.objects.all()
+            if self.route is None:
+                self.route = self.plural_name or self.model._meta.verbose_name_plural or f"{self.model.__name__}s"
 
-        if self.singular_name is None:
-            self.singular_name = self.model._meta.verbose_name or self.model.__name__
+            if self.queryset is None:
+                self.queryset = self.model.objects.all()
 
-        if self.plural_name is None:
-            self.plural_name = self.model._meta.verbose_name_plural or f"{self.model.__name__}s"
+            if self.singular_name is None:
+                self.singular_name = self.model._meta.verbose_name or self.model.__name__
+
+            if self.plural_name is None:
+                self.plural_name = self.model._meta.verbose_name_plural or f"{self.model.__name__}s"
+
+        elif self.route is None:
+            raise ValueError(f"NonModel-APIView {self.__name__} requires a user defined route")
 
     def _add_route_(self) -> None:
         if self.__name__ == "APIView":
             return
 
-        self.route = f"{self.route.rstrip('/')}/"
-        urlpatterns.extend((
-            path(self.route, self.as_view(), name=self.name),
-            path(f"{self.route}<int:id>", self.as_view(), name=self.name)
-        ))
+        if self.model is not None:
+            self.route = f"{self.route.rstrip('/')}/"
+            urlpatterns.extend((
+                path(self.route, self.as_view(), name=self.name),
+                path(f"{self.route}<int:id>", self.as_view(), name=self.name)
+            ))
+        else:
+            urlpatterns.append(
+                path(self.route, self.as_view(), name=self.name)
+            )
+            
 
     def _parse_parameters(self, request:HttpRequest, queryset:QuerySet) -> QuerySet:
         get_parameters = request.GET.dict()
@@ -137,7 +147,7 @@ class APIView(RouteView):
             if not user.has_perm(f'api.{self._permissions_match_table[request.method]}_{self.singular_name}') and not request.path_info.split("?")[0].strip("/").endswith(str(user.id)):
                 return NotAllowed()
 
-        return super().dispatch(request, queryset, id)
+        return super().dispatch(request=request, queryset=queryset, id=id)
 
     def head(self, request:HttpRequest, *args, **kwargs) -> APIResponse:
         return HttpResponse()

@@ -11,7 +11,9 @@ from . import APIView, Token
 from .responses import APIResponse
 
 @method_decorator(csrf_exempt, "dispatch")
-class LoginView(View):
+class LoginView(APIView):
+    route = "login"
+
     def post(self, request, **kwargs) -> APIResponse:
         data = request.body.decode('utf-8')
         json_data = json.loads(data)
@@ -25,6 +27,8 @@ class LoginView(View):
             return APIResponse(HTTPStatus.UNAUTHORIZED, "Wrong user credentials")
 
 
-class URLsView(View):
+class URLsView(APIView):
+    route = ""
+
     def get(self, request, **kwargs) -> APIResponse:
         return APIResponse(HTTPStatus.OK, "URLs available", sorted(set(view[1] for view in get_resolver(None).reverse_dict.values())))
