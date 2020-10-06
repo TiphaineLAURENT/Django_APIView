@@ -16,11 +16,13 @@ class CORSResponse(JsonResponse):
 class APIResponse(CORSResponse):
     """
      `code:int` Value of the http code to be sent back
+
      `reason:str` String describing the code
-     `data:dict` Dictionnary to be sent as json
+
+     `data:object` Dictionnary to be sent as json. Must implement __str__
     """
 
-    def __init__(self, code:int, reason:str, data={}, *args, **kwargs):
+    def __init__(self, code:int, reason:str, data:object={}, *args, **kwargs):
         super().__init__({
             'statuscode': code,
             'reason': reason,
@@ -33,10 +35,11 @@ class QuerySuccessful(APIResponse):
      Query on requested data has been successful
 
      `reason:str` String describing the code
-     `data:dict` Dictionnary to be sent as json
+
+     `data:object` Dictionnary to be sent as json. Must implement __str__
     """
 
-    def __init__(self, reason:str, data={}, **kwargs):
+    def __init__(self, reason:str, data:object={}, **kwargs):
         super().__init__(HTTPStatus.OK, reason, data=data, **kwargs)
 
 
@@ -45,10 +48,11 @@ class CreationSuccessful(APIResponse):
      Creation of requested data has been successful
 
      `reason:str` String describing the code
-     `data:dict` Dictionnary to be sent as json
+
+     `data:object` Dictionnary to be sent as json. Must implement __str__
     """
 
-    def __init__(self, reason:str, data={}, **kwargs):
+    def __init__(self, reason:str, data:object={}, **kwargs):
         super().__init__(HTTPStatus.CREATED, reason, data=data, **kwargs)
 
 

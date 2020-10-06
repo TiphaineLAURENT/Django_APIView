@@ -7,7 +7,6 @@ from django.core.signing import BadSignature, SignatureExpired
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 
-from typing import List, Tuple, Callable
 from http import HTTPStatus
 
 from django_routeview import RouteView, urlpatterns
@@ -28,7 +27,7 @@ class APIView(RouteView):
     """
 
     enforce_authentification:bool = False
-    http_method_names:List[str] = ["get", "post", "put", "patch", "delete", "head", "options"]
+    http_method_names:list[str] = ["get", "post", "put", "patch", "delete", "head", "options"]
 
     _permissions_match_table = {
         'GET': "view",
@@ -59,7 +58,7 @@ class APIView(RouteView):
 
         urlpatterns.append(
             path(self.route, self.as_view(), name=self.name)
-        )            
+        )
 
     @catch_exceptions
     @csrf_exempt

@@ -7,7 +7,8 @@ from django.core.signing import BadSignature, SignatureExpired
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 
-from typing import List, Tuple, Callable
+# from typing import List, Tuple, Callable
+from collections.abc import Callable
 from http import HTTPStatus
 
 from django_routeview import urlpatterns
@@ -41,7 +42,7 @@ class ModelAPIView(APIView):
     queryset:QuerySet = None
     singular_name:str = None
     plural_name:str = None
-    query_parameters:List[Tuple[str, Callable[[QuerySet, object], QuerySet]]] = [
+    query_parameters:list[tuple[str, Callable[[QuerySet, object], QuerySet]]] = [
         ('order_by', lambda queryset, field_names: queryset.order_by(*field_names.split(",")) if field_names else queryset),
         ('limit', lambda queryset, limit: queryset[:int(limit)] if limit else queryset),
     ]
@@ -75,7 +76,7 @@ class ModelAPIView(APIView):
         urlpatterns.extend((
             path(self.route, self.as_view(), name=self.name),
             path(f"{self.route}<int:id>", self.as_view(), name=self.name)
-        ))            
+        ))
 
     def _parse_parameters(self, request:HttpRequest, queryset:QuerySet) -> QuerySet:
         get_parameters = request.GET.dict()

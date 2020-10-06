@@ -34,6 +34,7 @@ class MyModel(JSONMixin, models.Model):
 # views.py
 
 from django_modelapiview import APIView
+from django_modelapiview.responses import APIResponse
 
 from .models import MyModel
 
@@ -43,7 +44,7 @@ class MyView(APIView):
 
     # Optional
     enforce_authentification:bool = True # Should this model be restricted with Token access
-    def get(self, request, *args, **kwargs):... # One of head, options, get...
+    def get(self, request, *args, **kwargs) -> APIResponse:... # One of head, options, get...
 ```
 
 ```py
@@ -67,7 +68,7 @@ class MyModelView(ModelAPIView):
         ('order_by', lambda queryset, field_names: queryset.order_by(*field_names.split(",")) if field_names else queryset),
         ('limit', lambda queryset, limit: queryset[:int(limit)] if limit else queryset), # Should be last since sliced QuerySet can't be filtered anymore
     ]
-    def get(self, request, *args, **kwargs):... # One of head, options, get...
+    def get(self, request, *args, **kwargs) -> APIResponse:... # One of head, options, get...
 ```
 
 ```py
@@ -108,3 +109,8 @@ from django.urls import path
 
 from django_modelapiview.views import LoginView, URLsView # Importing them is enough
 ```
+
+## Errors
+
+If you get a "Verb not implemented" reason from your endpoint but you are sure to have defined it.
+You probable just forgot the `-> APIResponse` return type hint.

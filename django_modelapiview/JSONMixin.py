@@ -7,8 +7,6 @@ from django.conf import settings
 import json
 import operator
 
-from typing import List
-
 from .responses import APIResponse, QuerySuccessful, CreationSuccessful, NotFound, NotAllowed, Conflict
 
 
@@ -19,7 +17,7 @@ class JSONMixin(object):
      json_fields:list[str]
     """
 
-    json_fields:List[str] = []
+    json_fields:list[str] = []
 
     def get_url(self, request:HttpRequest=None) -> str:
         if request is not None:
