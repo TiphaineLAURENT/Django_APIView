@@ -53,9 +53,6 @@ class ModelAPIView(APIView):
 
         super()._init_properties(self)
 
-        if self.name is None:
-            self.name = self.__name__
-
         if self.route is None:
             self.route = self.plural_name or self.model._meta.verbose_name_plural or f"{self.model.__name__}s"
 
@@ -67,6 +64,9 @@ class ModelAPIView(APIView):
 
         if self.plural_name is None:
             self.plural_name = self.model._meta.verbose_name_plural or f"{self.model.__name__}s"
+
+        if self.name is None:
+            self.name = self.singular_name or self.__name__
 
     def _add_route_(self) -> None:
         if self.__name__ == "ModelAPIView":
