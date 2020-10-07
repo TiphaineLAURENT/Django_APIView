@@ -44,4 +44,4 @@ class Token(object):
     def uid(self):
         if not self.is_unsigned():
             raise StillSigned
-        return self._body['id']
+        return self._body['uid']
