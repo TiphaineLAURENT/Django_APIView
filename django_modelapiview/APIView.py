@@ -41,10 +41,9 @@ class APIView(RouteView):
         if self.__name__ == "APIView":
             return
 
+        self.http_method_names = set()
         for cls in self.mro():
-            self.http_method_names = [method_name for method_name, method in vars(cls).items() if hasattr(method, '__annotations__') and method_name != "dispatch" and method.__annotations__.get('return') == APIResponse]
-            if self.http_method_names:
-                break
+            self.http_method_names.update([method_name for method_name, method in vars(cls).items() if hasattr(method, '__annotations__') and method_name != "dispatch" and method.__annotations__.get('return') == APIResponse])
 
         if self.name is None:
             self.name = self.__name__

@@ -60,7 +60,9 @@ class JSONMixin(object):
          Deserialize a string to type cls
 
          serialized_data:str
+
          id:int:optional       Does the deserialized object already have an id in the bdd
+
          save:boolean:optional Should the deserialized object be saved
         """
         raw_data = json.loads(serialized_data)
@@ -68,7 +70,7 @@ class JSONMixin(object):
         data = {'id': id or raw_data.get('id', None)}
         m2m_data = {}
 
-        for (field_name, field_value) in raw_data.items():
+        for field_name, field_value in raw_data.items():
             if field_name not in cls.json_fields:
                 continue
 
@@ -95,7 +97,7 @@ class JSONMixin(object):
         if save:
             if not obj.id:
                 obj.save() # Create the id propery if nonexistent
-            for (m2m_name, m2m_list) in m2m_data.items():
+            for m2m_name, m2m_list in m2m_data.items():
                 if isinstance(m2m_list[0], dict):
                     field = getattr(obj, m2m_name)
                     field.set(map(operator.itemgetter('id'), m2m_list))
