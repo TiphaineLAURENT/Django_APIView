@@ -72,10 +72,10 @@ class APIView(RouteView):
             token = Token(signed_data=headers['Authorization'].split(" ")[-1])
             try:
                 token.unsign()
-            except BadSignature:
-                return InvalidToken("Invalid signature")
             except SignatureExpired:
                 return InvalidToken("Token expired")
+            except BadSignature:
+                return InvalidToken("Invalid signature")
 
             try:
                 user = get_user_model().objects.get(id=token.uid)
