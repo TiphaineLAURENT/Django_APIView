@@ -18,7 +18,7 @@ class Token(object):
     _body = None
     _signed_data = None
 
-    def __init__(self, *, body:dict=None, signed_data:str=None):
+    def __init__(self, body:dict=None, signed_data:str=None):
         self._body = body
         self._signed_data = signed_data
 
@@ -44,4 +44,4 @@ class Token(object):
     def uid(self):
         if not self.is_unsigned():
             raise StillSigned
-        return self._body['uid']
+        return _body['id']

@@ -6,9 +6,9 @@ from django.http import HttpRequest, HttpResponse
 from django.core.signing import BadSignature, SignatureExpired
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils.translation import gettext as _
 
-# from typing import List, Tuple, Callable
-from collections.abc import Callable
+from typing import List, Tuple, Callable
 from http import HTTPStatus
 
 from django_routeview import urlpatterns
@@ -42,7 +42,7 @@ class ModelAPIView(APIView):
     queryset:QuerySet = None
     singular_name:str = None
     plural_name:str = None
-    query_parameters:list[tuple[str, Callable[[QuerySet, object], QuerySet]]] = [
+    query_parameters:List[Tuple[str, Callable[[QuerySet, object], QuerySet]]] = [
         ('order_by', lambda queryset, field_names: queryset.order_by(*field_names.split(",")) if field_names else queryset),
         ('limit', lambda queryset, limit: queryset[:int(limit)] if limit else queryset),
     ]
@@ -80,6 +80,7 @@ class ModelAPIView(APIView):
 
     def _parse_parameters(self, request:HttpRequest, queryset:QuerySet) -> QuerySet:
         get_parameters = request.GET.dict()
+        get_parameters.pop('lang', None)
 
         queries = {query[0]: get_parameters.pop(query[0], None) for query in self.query_parameters}
 
@@ -106,11 +107,11 @@ class ModelAPIView(APIView):
         """
         if id:
             if not queryset.exists():
-                return NotFound(f"No {self.singular_name} with id {id}")
-            return QuerySuccessful(f"Retrieved {self.singular_name}", data=queryset.first().serialize(request))
+                return NotFound(_("No %(singular_name)s with id %(id)d") % {'singular_name': self.singular_name, 'id': id})
+            return QuerySuccessful(_("Retrieved %(singular_name)s") % {'singular_name': self.singular_name}, data=queryset.first().serialize(request))
 
         # Else if trying to get on collection
-        return QuerySuccessful(f"Retrieved {self.plural_name}", data=[obj.serialize(request) for obj in queryset])
+        return QuerySuccessful(_("Retrieved %(plural_name)s") % {'plural_name': self.plural_name}, data=[obj.serialize(request) for obj in queryset])
 
     def patch(self, request:HttpRequest, queryset:QuerySet, id:int=None) -> APIResponse:
         """
@@ -118,8 +119,8 @@ class ModelAPIView(APIView):
         """
         if id:
             if not queryset.exists():
-                return NotFound(f"No {self.singular_name} with id {id}")
-            return QuerySuccessful(f"Updated {self.singular_name}", self.model.deserialize(request.body.decode("utf-8"), id).serialize(request))
+                return NotFound(_("No %(singular_name)s with id %(id)d") % {'singular_name': self.singular_name, 'id': id})
+            return QuerySuccessful(_("Updated %(singular_name)s") % {'singular_name': self.singular_name}, self.model.deserialize(request.body.decode("utf-8"), id).serialize(request))
 
         # Else if trying to patch on collection
         return NotAllowed()
@@ -130,11 +131,11 @@ class ModelAPIView(APIView):
         """
         if id:
             if queryset.exists():
-                return Conflict(f"{id} already taken")
-            return CreationSuccessful(f"Created {self.singular_name}", self.model.deserialize(request.body.decode("utf-8"), id).serialize(request))
+                return Conflict(_("%(id)d already taken") % {'id': id})
+            return CreationSuccessful(_("Created %(singular_name)s") % {'singular_name': self.singular_name}, self.model.deserialize(request.body.decode("utf-8"), id).serialize(request))
 
         # Else if trying to put on collection
-        return NotAllowed("You are trying to emplace on a collection. Instead use POST to create or use an id")
+        return NotAllowed(_("You are trying to emplace on a collection. Instead use POST to create or use an id"))
 
     def delete(self, request:HttpRequest, queryset:QuerySet, id:int=None) -> APIResponse:
         """
@@ -142,10 +143,10 @@ class ModelAPIView(APIView):
         """
         if id:
             if not queryset.exists():
-                return NotFound(f"No {self.singular_name} with id {id}")
+                return NotFound(_("No %(singular_name)s with id %(id)d") % {'singular_name': self.singular_name, 'id': id})
             obj_serialized = queryset.first().serialize(request)
             queryset.delete()
-            return QuerySuccessful(f"Deleted {self.singular_name}", obj_serialized)
+            return QuerySuccessful(_("Deleted %(singular_name)s") % {'singular_name': self.singular_name}, obj_serialized)
 
         # Else if trying to delete on collection
         return NotAllowed()
@@ -155,7 +156,7 @@ class ModelAPIView(APIView):
          Create specific in collection
         """
         if id:
-            return NotAllowed("You are trying to create at a specific id. Instead use PUT to emplace or use no id")
+            return NotAllowed(_("You are trying to create at a specific id. Instead use PUT to emplace or use no id"))
 
         # Else if trying to post on collection
-        return CreationSuccessful(f"Created {self.singular_name}", self.model.deserialize(request.body.decode("utf-8"), id).serialize(request))
+        return CreationSuccessful(_("Created %(singular_name)s") % {'singular_name': self.singular_name}, self.model.deserialize(request.body.decode("utf-8"), id).serialize(request))

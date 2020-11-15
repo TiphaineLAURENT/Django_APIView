@@ -20,7 +20,7 @@ class LoginView(APIView):
 
         user = authenticate(username=json_data['username'], password=json_data['password'])
         if user is not None:
-            token = Token(body={'uid': user.id})
+            token = Token({'uid': user.id})
             token.sign()
             return APIResponse(HTTPStatus.OK, "User logged in", {'token': str(token), 'user': user.serialize(request)})
         else:

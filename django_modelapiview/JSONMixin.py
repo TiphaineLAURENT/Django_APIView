@@ -17,7 +17,7 @@ class JSONMixin(object):
      json_fields:list[str]
     """
 
-    json_fields:list[str] = []
+    json_fields = []
 
     def get_url(self, request:HttpRequest=None) -> str:
         if request is not None:

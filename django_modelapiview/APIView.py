@@ -6,7 +6,9 @@ from django.http import HttpRequest, HttpResponse
 from django.core.signing import BadSignature, SignatureExpired
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils import translation
 
+from typing import List, Tuple, Callable
 from http import HTTPStatus
 
 from django_routeview import RouteView, urlpatterns
@@ -27,7 +29,7 @@ class APIView(RouteView):
     """
 
     enforce_authentification:bool = False
-    http_method_names:list[str] = ["get", "post", "put", "patch", "delete", "head", "options"]
+    http_method_names:List[str] = ["get", "post", "put", "patch", "delete", "head", "options"]
 
     _permissions_match_table = {
         'GET': "view",
@@ -64,28 +66,30 @@ class APIView(RouteView):
     def dispatch(self, request:HttpRequest, *args, **kwargs) -> APIResponse:
         headers = dict(request.headers)
 
-        if self.enforce_authentification:
+        with translation.override(request.GET.get('lang')):
 
-            if not 'Authorization' in headers:
-                return InvalidToken("Authentification required")
+            if self.enforce_authentification:
 
-            token = Token(signed_data=headers['Authorization'].split(" ")[-1])
-            try:
-                token.unsign()
-            except SignatureExpired:
-                return InvalidToken("Token expired")
-            except BadSignature:
-                return InvalidToken("Invalid signature")
+                if not 'Authorization' in headers:
+                    return InvalidToken("Authentification required")
 
-            try:
-                user = get_user_model().objects.get(id=token.uid)
-            except (KeyError, ObjectDoesNotExist):
-                return InvalidToken("Invalid body")
+                token = Token(signed_data=headers['Authorization'].split(" ")[1])
+                try:
+                    token.unsign()
+                except SignatureExpired:
+                    return InvalidToken("Token expired")
+                except BadSignature:
+                    return InvalidToken(translation.gettext("Invalid signature"))
 
-            if not user.has_perm(f'api.{self._permissions_match_table[request.method]}_{self.name}') and not request.path_info.split("?")[0].strip("/").endswith(str(user.id)):
-                return NotAllowed()
+                try:
+                    user = get_user_model().objects.get(id=token.uid)
+                except (KeyError, ObjectDoesNotExist):
+                    return InvalidToken("Invalid body")
 
-        return super().dispatch(request, *args, **kwargs)
+                if not user.has_perm(f'api.{self._permissions_match_table[request.method]}_{self.name}') and not request.path_info.split("?")[0].strip("/").endswith(str(user.id)):
+                    return NotAllowed()
+
+            return super().dispatch(request, *args, **kwargs)
 
     def http_method_not_allowed(self, request:HttpRequest, *args, **kwargs):
         return MethodNotImplemented()

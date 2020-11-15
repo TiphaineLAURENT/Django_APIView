@@ -1,4 +1,5 @@
 from django.http import JsonResponse
+from django.utils.translation import gettext as _
 
 from http import HTTPStatus
 
@@ -16,13 +17,11 @@ class CORSResponse(JsonResponse):
 class APIResponse(CORSResponse):
     """
      `code:int` Value of the http code to be sent back
-
      `reason:str` String describing the code
-
-     `data:object` Dictionnary to be sent as json. Must implement __str__
+     `data:dict` Dictionnary to be sent as json
     """
 
-    def __init__(self, code:int, reason:str, data:object={}, *args, **kwargs):
+    def __init__(self, code:int, reason:str, data={}, *args, **kwargs):
         super().__init__({
             'statuscode': code,
             'reason': reason,
@@ -35,11 +34,10 @@ class QuerySuccessful(APIResponse):
      Query on requested data has been successful
 
      `reason:str` String describing the code
-
-     `data:object` Dictionnary to be sent as json. Must implement __str__
+     `data:dict` Dictionnary to be sent as json
     """
 
-    def __init__(self, reason:str, data:object={}, **kwargs):
+    def __init__(self, reason:str, data={}, **kwargs):
         super().__init__(HTTPStatus.OK, reason, data=data, **kwargs)
 
 
@@ -48,11 +46,10 @@ class CreationSuccessful(APIResponse):
      Creation of requested data has been successful
 
      `reason:str` String describing the code
-
-     `data:object` Dictionnary to be sent as json. Must implement __str__
+     `data:dict` Dictionnary to be sent as json
     """
 
-    def __init__(self, reason:str, data:object={}, **kwargs):
+    def __init__(self, reason:str, data={}, **kwargs):
         super().__init__(HTTPStatus.CREATED, reason, data=data, **kwargs)
 
 
@@ -73,7 +70,7 @@ class MethodNotImplemented(APIResponse):
     """
 
     def __init__(self, **kwargs):
-        super().__init__(HTTPStatus.NOT_IMPLEMENTED, "Verb not implemented", **kwargs)
+        super().__init__(HTTPStatus.NOT_IMPLEMENTED, _("Verb not implemented"), **kwargs)
 
 
 class ExceptionCaught(APIResponse):
@@ -84,7 +81,7 @@ class ExceptionCaught(APIResponse):
     """
 
     def __init__(self, exception:Exception, **kwargs):
-        super().__init__(HTTPStatus.BAD_REQUEST, f"Exception caught: {str(exception)}", **kwargs)
+        super().__init__(HTTPStatus.BAD_REQUEST, _("Exception caught: %(exception)s") % {'exception': str(exception)}, **kwargs)
 
 
 class Conflict(APIResponse):
@@ -117,4 +114,4 @@ class InvalidToken(APIResponse):
     """
 
     def __init__(self, reason:str, **kwargs):
-        super().__init__(HTTPStatus.UNAUTHORIZED, f"Invalid token: {reason}", **kwargs)
+        super().__init__(HTTPStatus.UNAUTHORIZED, _("Invalid token: %(reason)s") % {'reason': reason}, **kwargs)

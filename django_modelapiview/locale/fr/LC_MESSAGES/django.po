@@ -1,0 +1,86 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2020-11-15 14:02+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+#: django_modelapiview/APIView.py:82
+msgid "Invalid signature"
+msgstr "Singnature invalide"
+
+#: django_modelapiview/ModelAPIView.py:110
+#: django_modelapiview/ModelAPIView.py:122
+#: django_modelapiview/ModelAPIView.py:146
+#, python-format
+msgid "No %(singular_name)s with id %(id)d"
+msgstr "Aucun %(singular_name)s avec l'id %(id)d"
+
+#: django_modelapiview/ModelAPIView.py:111
+#, python-format
+msgid "Retrieved %(singular_name)s"
+msgstr "%(singular_name)s récupéré"
+
+#: django_modelapiview/ModelAPIView.py:114
+#, python-format
+msgid "Retrieved %(plural_name)s"
+msgstr "%(plural_name)s récupérés"
+
+#: django_modelapiview/ModelAPIView.py:123
+#, python-format
+msgid "Updated %(singular_name)s"
+msgstr "%(singular_name)s mis à jour"
+
+#: django_modelapiview/ModelAPIView.py:134
+#, python-format
+msgid "%(id)d already taken"
+msgstr "%(id)d est déjà pris"
+
+#: django_modelapiview/ModelAPIView.py:135
+#: django_modelapiview/ModelAPIView.py:162
+#, python-format
+msgid "Created %(singular_name)s"
+msgstr "%(singular_name)s créé"
+
+#: django_modelapiview/ModelAPIView.py:138
+msgid ""
+"You are trying to emplace on a collection. Instead use POST to create or use "
+"an id"
+msgstr "Vous essayez de mettre en place dans une collection. Vous devriez utiliser POST pour créé ou spécifié un id"
+
+#: django_modelapiview/ModelAPIView.py:149
+#, python-format
+msgid "Deleted %(singular_name)s"
+msgstr "%(singular_name)s supprimé"
+
+#: django_modelapiview/ModelAPIView.py:159
+msgid ""
+"You are trying to create at a specific id. Instead use PUT to emplace or use "
+"no id"
+msgstr "Vous essayez de créé avec un id spécifique. Utiliser PUT pour mettre en place ou ne spécifié pas d'id"
+
+#: django_modelapiview/responses.py:73
+msgid "Verb not implemented"
+msgstr "Verbe non implémenté"
+
+#: django_modelapiview/responses.py:84
+#, python-format
+msgid "Exception caught: %(exception)s"
+msgstr "Exception intercepté : %(exception)s"
+
+#: django_modelapiview/responses.py:117
+#, python-format
+msgid "Invalid token: %(reason)s"
+msgstr "Token invalide: %(reason)s"

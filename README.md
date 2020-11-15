@@ -94,6 +94,25 @@ https://myhost.com/api/mymodel/?id__in=1,2,3&foreignkey__id__in=2,3&field__lte=5
 https://myhost.com/api/mymodel/?manytomany__in=2,3&field__lte=5&limit=10
 ```
 
+It also supports translation:
+
+First enable it as an app
+```py
+#settings.py
+
+INSTALLED_APPS = [
+    ...
+    'django_modelapiview',
+    ...
+]
+```
+
+Then change the language using GET parameters:
+```sh
+#Currently supports : enlish(en)(default), français(fr)
+https://myhost.com/api/mymodel/?lang=fr
+```
+
 ## Using base views
 
 Django ModelAPIView provides 2 base views:
