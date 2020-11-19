@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-19 22:52+0000\n"
+"POT-Creation-Date: 2020-11-19 23:51+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -110,3 +110,15 @@ msgstr "Exception intercepté : %(exception)s"
 #, python-format
 msgid "Invalid token: %(reason)s"
 msgstr "Token invalide: %(reason)s"
+
+#: django_modelapiview/views.py:26
+msgid "User logged in"
+msgstr "Utilisateur connecté"
+
+#: django_modelapiview/views.py:28
+msgid "Wrong user credentials"
+msgstr "Mauvais identifiants utilisateur"
+
+#: django_modelapiview/views.py:35
+msgid "URLs available"
+msgstr "URLs disponibles"
