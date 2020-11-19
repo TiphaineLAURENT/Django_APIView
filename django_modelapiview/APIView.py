@@ -7,6 +7,7 @@ from django.core.signing import BadSignature, SignatureExpired
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import translation
+from django.utils.translation import gettext as _
 
 from typing import List, Tuple, Callable
 from http import HTTPStatus
@@ -51,7 +52,7 @@ class APIView(RouteView):
             self.name = self.__name__
 
         if self.route is None:
-            raise ValueError(f"APIView {self.__name__} requires a user defined route")
+            raise ValueError(_("APIView %(name)s requires a user defined route") % {'name': self.__name__})
 
     def _add_route_(self) -> None:
         if self.__name__ == "APIView":
@@ -71,20 +72,20 @@ class APIView(RouteView):
             if self.enforce_authentification:
 
                 if not 'Authorization' in headers:
-                    return InvalidToken("Authentification required")
+                    return InvalidToken(_("Authentication required"))
 
                 token = Token(signed_data=headers['Authorization'].split(" ")[1])
                 try:
                     token.unsign()
                 except SignatureExpired:
-                    return InvalidToken("Token expired")
+                    return InvalidToken(_("Token expired"))
                 except BadSignature:
-                    return InvalidToken(translation.gettext("Invalid signature"))
+                    return InvalidToken(_("Invalid signature"))
 
                 try:
                     user = get_user_model().objects.get(id=token.uid)
                 except (KeyError, ObjectDoesNotExist):
-                    return InvalidToken("Invalid body")
+                    return InvalidToken(_("Invalid body"))
 
                 if not user.has_perm(f'api.{self._permissions_match_table[request.method]}_{self.name}') and not request.path_info.split("?")[0].strip("/").endswith(str(user.id)):
                     return NotAllowed()
@@ -98,4 +99,4 @@ class APIView(RouteView):
         return HttpResponse()
 
     def options(self, request:HttpRequest, *args, **kwargs) -> APIResponse:
-        return APIResponse(HTTPStatus.OK, "Available methods", self.http_method_names)
+        return APIResponse(HTTPStatus.OK, _("Available methods"), self.http_method_names)

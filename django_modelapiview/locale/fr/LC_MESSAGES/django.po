@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-15 14:02+0000\n"
+"POT-Creation-Date: 2020-11-19 22:52+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,9 +17,31 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-#: django_modelapiview/APIView.py:82
+
+#: django_modelapiview/APIView.py:55
+#, python-format
+msgid "APIView %(name)s requires a user defined route"
+msgstr "L'APIView %(name)s requière une route définie par l'utilisateur"
+
+#: django_modelapiview/APIView.py:75
+msgid "Authentication required"
+msgstr "Authentification requise"
+
+#: django_modelapiview/APIView.py:81
+msgid "Token expired"
+msgstr "Jeton éxpiré"
+
+#: django_modelapiview/APIView.py:83
 msgid "Invalid signature"
-msgstr "Singnature invalide"
+msgstr "Signature invalide"
+
+#: django_modelapiview/APIView.py:88
+msgid "Invalid body"
+msgstr "Corps invalide"
+
+#: django_modelapiview/APIView.py:102
+msgid "Available methods"
+msgstr "Méthodes disponibles"
 
 #: django_modelapiview/ModelAPIView.py:110
 #: django_modelapiview/ModelAPIView.py:122
@@ -58,7 +80,9 @@ msgstr "%(singular_name)s créé"
 msgid ""
 "You are trying to emplace on a collection. Instead use POST to create or use "
 "an id"
-msgstr "Vous essayez de mettre en place dans une collection. Vous devriez utiliser POST pour créé ou spécifié un id"
+msgstr ""
+"Vous essayez de mettre en place dans une collection. Vous devriez utiliser "
+"POST pour créé ou spécifié un id"
 
 #: django_modelapiview/ModelAPIView.py:149
 #, python-format
@@ -69,7 +93,9 @@ msgstr "%(singular_name)s supprimé"
 msgid ""
 "You are trying to create at a specific id. Instead use PUT to emplace or use "
 "no id"
-msgstr "Vous essayez de créé avec un id spécifique. Utiliser PUT pour mettre en place ou ne spécifié pas d'id"
+msgstr ""
+"Vous essayez de créé avec un id spécifique. Utiliser PUT pour mettre en "
+"place ou ne spécifié pas d'id"
 
 #: django_modelapiview/responses.py:73
 msgid "Verb not implemented"

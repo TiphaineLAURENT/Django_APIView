@@ -21,7 +21,7 @@ class APIResponse(CORSResponse):
      `data:dict` Dictionnary to be sent as json
     """
 
-    def __init__(self, code:int, reason:str, data={}, *args, **kwargs):
+    def __init__(self, code:int, reason:str, data:object={}, *args, **kwargs):
         super().__init__({
             'statuscode': code,
             'reason': reason,
