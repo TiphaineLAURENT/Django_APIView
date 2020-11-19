@@ -93,10 +93,11 @@ class JSONMixin(object):
             queryset.update(**data)
             obj = queryset.first()
         else:
-            obj = cls(**data)
+            if save:
+                obj = cls.objects.create(**data)
+            else:
+                obj = cls(**data)
         if save:
-            if not obj.id:
-                obj.save() # Create the id propery if nonexistent
             for m2m_name, m2m_list in m2m_data.items():
                 if isinstance(m2m_list[0], dict):
                     field = getattr(obj, m2m_name)
