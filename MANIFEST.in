@@ -1,0 +1,5 @@
+include LICENSE
+include README.md
+recursive-include django_modelapiview/static *
+recursive-include django_modelapiview/templates *
+recursive-include django_modelapiview/locale *
