@@ -11,7 +11,6 @@ import json
 from . import APIView, Token
 from .responses import APIResponse
 
-@method_decorator(csrf_exempt, "dispatch")
 class LoginView(APIView):
     route = "login"
 
