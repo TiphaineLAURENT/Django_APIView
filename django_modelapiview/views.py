@@ -1,5 +1,5 @@
 from django.views import View
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, get_user_model
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.urls import get_resolver
@@ -11,6 +11,8 @@ import json
 from . import APIView, Token
 from .responses import APIResponse
 
+USER_MODEL = get_user_model()
+
 class LoginView(APIView):
     route = "login"
 
@@ -18,7 +20,7 @@ class LoginView(APIView):
         data = request.body.decode('utf-8')
         json_data = json.loads(data)
 
-        user = authenticate(username=json_data['username'], password=json_data['password'])
+        user = authenticate(username=json_data.get(USER_MODEL.USERNAME_FIELD), password=json_data.get('password'))
         if user is not None:
             token = Token({'uid': user.id})
             token.sign()
