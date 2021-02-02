@@ -3,6 +3,7 @@ from django.db.models import QuerySet
 from django.core.files.base import File
 from django.http import HttpRequest
 from django.conf import settings
+from django.core.exceptions import FieldDoesNotExist
 
 import json
 import operator
@@ -35,9 +36,9 @@ class JSONMixin(object):
         for field_name in self.json_fields:
             field = getattr(self, field_name)
             if issubclass(field.__class__, models.manager.BaseManager):
-                value = [{'id': related.id, 'url': related.get_url(request)} if isinstance(related, JSONMixin) else {'id': related.id}for related in field.all().only('id')]
+                value = [{'id': related.id, 'url': related.get_url(request)} if isinstance(related, JSONMixin) else {'id': related.id} for related in field.only('id')]
             elif hasattr(field, 'id'):
-                value = {'id': field.id, 'url': field.get_url(request)}
+                value = {'id': field.id, 'url': field.get_url(request)} if isinstance(field, JSONMixin) else {'id': field.id}
             elif callable(field):
                 value = field()
             elif issubclass(field.__class__, File):
@@ -74,7 +75,11 @@ class JSONMixin(object):
             if field_name not in cls.json_fields:
                 continue
 
-            field = cls._meta.get_field(field_name)
+            try:
+                field = cls._meta.get_field(field_name)
+            except FieldDoesNotExist:
+                continue
+                
             if field.remote_field and field.remote_field.many_to_many:
                 m2m_data[field_name] = field_value
             elif field.remote_field and field.remote_field.many_to_one: # separated 1:N from N:1
@@ -99,6 +104,8 @@ class JSONMixin(object):
                 obj = cls(**data)
         if save:
             for m2m_name, m2m_list in m2m_data.items():
+                if not m2m_list:
+                    continue
                 if isinstance(m2m_list[0], dict):
                     field = getattr(obj, m2m_name)
                     field.set(map(operator.itemgetter('id'), m2m_list))
